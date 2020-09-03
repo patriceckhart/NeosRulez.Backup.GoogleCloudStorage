@@ -4,7 +4,8 @@
     "name": "neosrulez/backup-googlecloudstorage",
     "require": {
         "neos/flow": "*",
-        "ifsnop/mysqldump-php": "2.9"
+        "ifsnop/mysqldump-php": "2.9",
+        "google/cloud-storage": "*"
     },
     "autoload": {
         "psr-4": {

@@ -7,6 +7,7 @@ namespace NeosRulez\Backup\GoogleCloudStorage\Factory;
 
 use Neos\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
+use Ifsnop\Mysqldump as IMysqldump;
 
 /**
  *
@@ -15,18 +16,18 @@ use Doctrine\ORM\Mapping as ORM;
 class DatabaseFactory {
 
     /**
-     *
-     * @return void
+     * @return string
      */
     public function createDatabaseBackup() {
-
         $credentials = $this->getDatabaseCredentials();
-
-
-//        return $credentials;
-//        return exec('mysqldump --host '. $credentials['host'] .' --user '. $credentials['user'] .' --password '. $credentials['password'] .' '. $credentials['dbname'] .' --result-file='.constant('FLOW_PATH_ROOT').'test.sql') === 0;
-//        $dump_file = constant('FLOW_PATH_ROOT') . $credentials['dbname'] . '_' . date('Y-m-d_H-i-s') . '.sql.gz';
-//        passthru("mysqldump --user=" . $credentials['user'] ." --password=" . $credentials['password'] ." --host=" . $credentials['host'] ." | gzip -c  > $dump_file");
+        try {
+            $dump = new IMysqldump\Mysqldump('mysql:host=' . $credentials['host'] . ';dbname=' . $credentials['dbname'] . '', $credentials['user'], $credentials['password']);
+            $dump_file = constant('FLOW_PATH_ROOT') . $credentials['dbname'] . '_' . date('Y-m-d_H-i-s') . '.sql';
+            $dump->start($dump_file);
+            return $dump_file;
+        } catch (\Exception $e) {
+            print('mysqldump-php error: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -38,12 +39,7 @@ class DatabaseFactory {
         $configuration = shell_exec('cd ' . $flow_rootpath . ' && ./flow configuration:show');
         $configuration_yaml = yaml_parse($configuration);
         $yaml_parse = $configuration_yaml['Neos']['Flow']['persistence']['backendOptions'];
-//        $db_host = $yaml_parse['host'];
-//        $db_name = $yaml_parse['dbname'];
-//        $db_user = $yaml_parse['user'];
-//        $db_password = $yaml_parse['password'];
         return $yaml_parse;
     }
-
 
 }

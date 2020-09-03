@@ -20,20 +20,6 @@ class BackupCommandController extends CommandController
      */
     protected $backupService;
 
-    /**
-     * @param array $settings
-     * @return void
-     */
-    public function injectSettings(array $settings) {
-        $this->settings = $settings;
-    }
-
-    public function storage() {
-        $storage = new StorageClient([
-            'keyFilePath' => $this->settings['key_file_path']
-        ]);
-        return $storage;
-    }
 
     /**
      * Create backup on Google Cloud Storage
@@ -41,9 +27,9 @@ class BackupCommandController extends CommandController
      * @return void
      */
     public function createCommand() {
-print_r($this->backupService->createBackup());
-//        $this->outputLine($this->backupService->createBackup());
-//        $this->outputLine('created: '.$file.' on '.$this->settings['storage_bucket_name']);
+
+        $backup = $this->backupService->createBackup();
+        $this->outputLine('created: ' . $backup['file'] . ' on ' . $backup['bucket']);
     }
 
     /**
