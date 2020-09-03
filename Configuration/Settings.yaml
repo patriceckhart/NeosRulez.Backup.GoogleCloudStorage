@@ -1,0 +1,6 @@
+NeosRulez:
+  Backup:
+    GoogleCloudStorage:
+      backup_identfier: 'neosrulez' # your own backup identifier (extend filename on storage)
+      storage_bucket_name: 'patriceckhart_test'
+      key_file_path: '/data/neos/Packages/Application/NeosRulez.Backup.GoogleCloudStorage/Resources/Private/.credentials/playground-239409-830a2bae6a31.json'

@@ -1,0 +1,19 @@
+{
+    "description": "Backup your persistent data and database in Google Cloud Storage",
+    "type": "neos-package",
+    "name": "neosrulez/backup-googlecloudstorage",
+    "require": {
+        "neos/flow": "*",
+        "ifsnop/mysqldump-php": "2.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "NeosRulez\\Backup\\GoogleCloudStorage\\": "Classes/"
+        }
+    },
+    "extra": {
+        "neos": {
+            "package-key": "NeosRulez.Backup.GoogleCloudStorage"
+        }
+    }
+}
