@@ -50,7 +50,7 @@ class BackupService {
         $database = $this->databaseFactory->createDatabaseBackup();
         $persistent_data = $this->persistentDataFactory->createPersistentDataBackup($database);
 
-        $backup_filename = 'backup_' . date('Y-m-d_H-i-s').'.tar.gz';
+        $backup_filename = $this->settings['backup_identfier'] . '_' . date('Y-m-d_H-i-s').'.tar.gz';
         shell_exec('tar -cf ' . $backup_filename . ' ' . $database . ' ' . $persistent_data);
         shell_exec('rm -rf ' . $database . ' ' . $persistent_data);
 
