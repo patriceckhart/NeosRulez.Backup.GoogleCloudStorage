@@ -48,11 +48,9 @@ class BackupService {
     public function createBackup() {
 
         $database = $this->databaseFactory->createDatabaseBackup();
-//        $persistent_data = $this->persistentDataFactory->createPersistentDataBackup($database);
 
         $backup_filename = $this->settings['backup_identfier'] . '_' . date('Y-m-d_H-i-s').'.tar.gz';
         shell_exec('tar -cf ' . $backup_filename . ' ' . $database . ' ' . constant('FLOW_PATH_ROOT') . 'Data/');
-//        shell_exec('rm -rf ' . $database . ' ' . $persistent_data);
 
         $this->upload($this->settings['storage_bucket_name'], $backup_filename, constant('FLOW_PATH_ROOT') . $backup_filename);
 
@@ -87,9 +85,46 @@ class BackupService {
         $object = $bucket->object($objectName);
         $object->downloadToFile(constant('FLOW_PATH_ROOT') . $objectName);
         shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && tar -xvf ' . $objectName);
-        $this->databaseFactory->restoreDatabaseBackup($objectName);
+        $this->databaseFactory->restoreDatabaseBackup();
         $this->persistentDataFactory->restorePersistentDataBackup($objectName);
         $this->deleteTmp($objectName);
+    }
+
+    /**
+     * @param string $objectName
+     */
+    function restorePersistentData($objectName) {
+        $storage = $this->storage();
+        $bucket = $storage->bucket($this->settings['storage_bucket_name']);
+        $object = $bucket->object($objectName);
+        $object->downloadToFile(constant('FLOW_PATH_ROOT') . $objectName);
+        shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && tar -xvf ' . $objectName);
+        $this->persistentDataFactory->restorePersistentDataBackup($objectName);
+        $this->deleteTmp($objectName);
+    }
+
+    /**
+     * @param string $objectName
+     */
+    function restoreDatabase($objectName) {
+        $storage = $this->storage();
+        $bucket = $storage->bucket($this->settings['storage_bucket_name']);
+        $object = $bucket->object($objectName);
+        $object->downloadToFile(constant('FLOW_PATH_ROOT') . $objectName);
+        shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && tar -xvf ' . $objectName);
+        $this->databaseFactory->restoreDatabaseBackup();
+        $this->deleteTmp($objectName);
+    }
+
+    /**
+     * @param string $objectName
+     */
+    function download($objectName) {
+        $storage = $this->storage();
+        $bucket = $storage->bucket($this->settings['storage_bucket_name']);
+        $object = $bucket->object($objectName);
+        $object->downloadToFile(constant('FLOW_PATH_ROOT') . $objectName);
+        shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && mv ' . $objectName . ' ' . constant('FLOW_PATH_ROOT') . 'Web/' . $objectName);
     }
 
     /**
@@ -106,7 +141,7 @@ class BackupService {
 
     /**
      * @param string $objectName
-     * @return string
+     * @return void
      */
     function deleteTmp($objectName) {
         shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && rm -rf ' . $objectName);

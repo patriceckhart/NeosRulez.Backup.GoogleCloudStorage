@@ -44,6 +44,39 @@ class BackupCommandController extends CommandController
     }
 
     /**
+     * Restore only data backup from Google Cloud Storage (can't be undone!)
+     *
+     * @param string $backup
+     * @return void
+     */
+    public function restoredataCommand($backup) {
+        $this->backupService->restorePersistentData($backup);
+        $this->outputLine('data restored: ' . $backup);
+    }
+
+    /**
+     * Restore only database from Google Cloud Storage (can't be undone!)
+     *
+     * @param string $backup
+     * @return void
+     */
+    public function restoredatabaseCommand($backup) {
+        $this->backupService->restoreDatabase($backup);
+        $this->outputLine('database restored: ' . $backup);
+    }
+
+    /**
+     * Restore only database from Google Cloud Storage (can't be undone!)
+     *
+     * @param string $backup
+     * @return void
+     */
+    public function downloadCommand($backup) {
+        $this->backupService->download($backup);
+        $this->outputLine('Backup has been downloaded: https://yourdomain.com/' . $backup);
+    }
+
+    /**
      * Delete backup on Google Cloud Storage (can't be undone!)
      *
      * @param string $backup
