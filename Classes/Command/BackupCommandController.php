@@ -66,7 +66,7 @@ class BackupCommandController extends CommandController
     }
 
     /**
-     * Restore only database from Google Cloud Storage (can't be undone!)
+     * Download backup from Google Cloud Storage
      *
      * @param string $backup
      * @return void
