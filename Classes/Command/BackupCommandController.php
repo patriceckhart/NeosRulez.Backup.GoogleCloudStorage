@@ -39,8 +39,19 @@ class BackupCommandController extends CommandController
      * @return void
      */
     public function restoreCommand($backup) {
+        $this->backupService->restore($backup);
+        $this->outputLine('restored: ' . $backup);
+    }
 
-//        $this->outputLine('backup: '.$backup.' restored from '.$this->settings['storage_bucket_name']);
+    /**
+     * Delete backup on Google Cloud Storage (can't be undone!)
+     *
+     * @param string $backup
+     * @return void
+     */
+    public function deleteCommand($backup) {
+        $bucket = $this->backupService->delete($backup);
+        $this->outputLine('deleted: ' . $backup . ' from ' . $bucket);
     }
 
 }
