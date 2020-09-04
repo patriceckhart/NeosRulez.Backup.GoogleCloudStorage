@@ -1,6 +1,6 @@
 # Neos CMS and Neos Flow Google Cloud Storage Backup
 
-A package for Neos CMS and Neos Flow to create in Google Cloud Storage and restore.
+A package for Neos CMS and Neos Flow to create and restore backups in and from Google Cloud Storage.
 
 ## Installation
 
