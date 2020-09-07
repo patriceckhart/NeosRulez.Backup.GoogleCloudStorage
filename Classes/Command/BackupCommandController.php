@@ -20,15 +20,18 @@ class BackupCommandController extends CommandController
      */
     protected $backupService;
 
-
     /**
      * Create backup on Google Cloud Storage
      *
+     * @param string $name
      * @return void
      */
-    public function createCommand() {
-
-        $backup = $this->backupService->createBackup();
+    public function createCommand($name = NULL) {
+        if($name) {
+            $backup = $this->backupService->createBackup($name);
+        } else {
+            $backup = $this->backupService->createBackup();
+        }
         $this->outputLine('created: ' . $backup['file'] . ' on ' . $backup['bucket']);
     }
 

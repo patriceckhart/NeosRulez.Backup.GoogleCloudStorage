@@ -43,23 +43,22 @@ class BackupService {
     }
 
     /**
+     * @param string $name
      * @return array
      */
-    public function createBackup() {
-
+    public function createBackup($name = NULL) {
         $database = $this->databaseFactory->createDatabaseBackup();
-
-        $backup_filename = $this->settings['backup_identfier'] . '_' . date('Y-m-d_H-i-s').'.tar.gz';
+        if($name) {
+            $file_identifier = $name;
+        } else {
+            $file_identifier = $this->settings['backup_identfier'];
+        }
+        $backup_filename = $file_identifier . '_' . date('Y-m-d_H-i-s').'.tar.gz';
         shell_exec('tar -cf ' . $backup_filename . ' ' . $database . ' ' . constant('FLOW_PATH_ROOT') . 'Data/');
-
         $this->upload($this->settings['storage_bucket_name'], $backup_filename, constant('FLOW_PATH_ROOT') . $backup_filename);
-
         shell_exec('rm -rf ' . constant('FLOW_PATH_ROOT') . $backup_filename);
-
         $result = ['file' => $backup_filename, 'bucket' => $this->settings['storage_bucket_name']];
-
         return $result;
-
     }
 
     /**

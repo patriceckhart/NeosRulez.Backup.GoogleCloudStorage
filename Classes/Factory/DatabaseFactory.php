@@ -35,7 +35,6 @@ class DatabaseFactory {
      * @return void
      */
     public function restoreDatabaseBackup() {
-
         $sqlfile = [];
         $dir = constant('FLOW_PATH_ROOT') . 'data/neos';
         if (is_dir($dir)){
@@ -46,11 +45,9 @@ class DatabaseFactory {
                 closedir($dh);
             }
         }
-
         $credentials = $this->getDatabaseCredentials();
         $pdo = new \PDO('mysql:host=' . $credentials['host'] . ';dbname=' . $credentials['dbname'] .'', $credentials['user'],  $credentials['password']);
         $this->importSqlFile($pdo, constant('FLOW_PATH_ROOT') . 'data/neos/' . $sqlfile[1]);
-
     }
 
     /**
@@ -93,20 +90,16 @@ class DatabaseFactory {
                         print('Error performing Query: ' . $tmpLine . ' ' . $e->getMessage());
                         $errorDetect = true;
                     }
-
                     $tmpLine = '';
                 }
             }
-
             if ($errorDetect) {
                 return false;
             }
-
         } catch (\Exception $e) {
             print($e->getMessage());
             return false;
         }
-
         return true;
     }
 
