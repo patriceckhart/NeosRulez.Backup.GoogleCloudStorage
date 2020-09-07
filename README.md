@@ -29,13 +29,13 @@ NeosRulez:
 
 | CLI command | Action |
 |---------|-------------|
-|./flow backup:create|Create backup on Google Cloud Storage|
-|./flow backup:create --name `custom`|Create backup on Google Cloud Storage|
+|./flow backup:create|Create backup in Google Cloud Storage|
+|./flow backup:create --name `custom`|Create custom named backup in Google Cloud Storage|
 |./flow backup:restore `name_of_the_backup.tar.gz`|Restore backup from Google Cloud Storage (can't be undone!)|
 |./flow backup:restoredata|Restore only data backup from Google Cloud Storage (can't be undone!)|
 |./flow backup:restoredatabase|Restore only database from Google Cloud Storage (can't be undone!)|
 |./flow backup:download|Download backup from Google Cloud Storage|
-|./flow backup:delete|Delete backup on Google Cloud Storage (can't be undone!)|
+|./flow backup:delete|Delete backup in Google Cloud Storage (can't be undone!)|
 
 ## Author
 
