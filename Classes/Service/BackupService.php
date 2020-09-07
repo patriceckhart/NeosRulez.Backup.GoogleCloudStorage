@@ -57,6 +57,7 @@ class BackupService {
         shell_exec('tar -cf ' . $backup_filename . ' ' . $database . ' ' . constant('FLOW_PATH_ROOT') . 'Data/');
         $this->upload($this->settings['storage_bucket_name'], $backup_filename, constant('FLOW_PATH_ROOT') . $backup_filename);
         shell_exec('rm -rf ' . constant('FLOW_PATH_ROOT') . $backup_filename);
+        shell_exec('rm -rf ' . $database);
         $result = ['file' => $backup_filename, 'bucket' => $this->settings['storage_bucket_name']];
         return $result;
     }
