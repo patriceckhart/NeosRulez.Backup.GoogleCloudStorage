@@ -119,7 +119,7 @@ class BackupService {
     function delete(string $objectName):string
     {
         $this->googleCloudStorageService->delete($objectName);
-        return 'backup ' . $objectName . ' deleted.';
+        return $objectName;
     }
 
     /**
