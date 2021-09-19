@@ -7,7 +7,8 @@ namespace NeosRulez\Backup\GoogleCloudStorage\Service;
 
 use Neos\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
-use Google\Cloud\Storage\StorageClient;
+use wapmorgan\UnifiedArchive\UnifiedArchive;
+use Ifsnop\Mysqldump as IMysqldump;
 
 /**
  *
@@ -17,15 +18,26 @@ class BackupService {
 
     /**
      * @Flow\Inject
-     * @var \NeosRulez\Backup\GoogleCloudStorage\Factory\DatabaseFactory
+     * @var \NeosRulez\Backup\GoogleCloudStorage\Service\GoogleCloudStorageService
      */
-    protected $databaseFactory;
+    protected $googleCloudStorageService;
 
     /**
      * @Flow\Inject
      * @var \NeosRulez\Backup\GoogleCloudStorage\Factory\PersistentDataFactory
      */
     protected $persistentDataFactory;
+
+    /**
+     * @Flow\Inject
+     * @var \NeosRulez\Backup\GoogleCloudStorage\Factory\DatabaseFactory
+     */
+    protected $databaseFactory;
+
+    /**
+     * @var array
+     */
+    protected $settings;
 
     /**
      * @param array $settings
@@ -35,119 +47,90 @@ class BackupService {
         $this->settings = $settings;
     }
 
-    public function storage() {
-        $storage = new StorageClient([
-            'keyFilePath' => $this->settings['key_file_path']
-        ]);
-        return $storage;
-    }
 
     /**
      * @param string $name
-     * @return array
+     * @return string
      */
-    public function createBackup($name = NULL) {
-        $database = $this->databaseFactory->createDatabaseBackup();
-        if($name) {
-            $file_identifier = $name;
-        } else {
-            $file_identifier = $this->settings['backup_identfier'];
-        }
-        $backup_filename = $file_identifier . '_' . date('Y-m-d_H-i-s').'.tar.gz';
-        shell_exec('tar -cf ' . $backup_filename . ' ' . $database . ' ' . constant('FLOW_PATH_ROOT') . 'Data/');
-        $this->upload($this->settings['storage_bucket_name'], $backup_filename, constant('FLOW_PATH_ROOT') . $backup_filename);
-        shell_exec('rm -rf ' . constant('FLOW_PATH_ROOT') . $backup_filename);
-        shell_exec('rm -rf ' . $database);
-        $result = ['file' => $backup_filename, 'bucket' => $this->settings['storage_bucket_name']];
-        return $result;
+    public function createBackup($name = null):string
+    {
+        $tempDir = sys_get_temp_dir();
+        $fileIdentifier = $name !== null ? $name : $this->settings['backup_identfier'];
+        $backupFilename = $fileIdentifier . '_' . date('Y-m-d_H-i-s').'.tar.gz';
+        $backupSource = $tempDir . '/' . $backupFilename;
+
+        $persistentData = $this->persistentDataFactory->create();
+        $database = $this->databaseFactory->create();
+
+        UnifiedArchive::archiveFiles(['PersistentData.zip' => $persistentData, 'Database.sql' => $database], $backupSource);
+        $this->googleCloudStorageService->upload($backupFilename, $backupSource);
+        unlink($backupSource);
+        unlink($database);
+        unlink($persistentData);
+        return $backupFilename;
     }
 
     /**
-     * @param string $bucketName
-     * @param string $objectName
-     * @param string $source
+     * @return string
      */
-    function upload($bucketName, $objectName, $source) {
-        $storage = $this->storage();
-        $file = fopen($source, 'r');
-        $bucket = $storage->bucket($bucketName);
-        $object = $bucket->upload($file, [
-            'name' => $objectName
-        ]);
-    }
-
-    /**
-     * @param string $objectName
-     */
-    function restore($objectName) {
-        $storage = $this->storage();
-        $bucket = $storage->bucket($this->settings['storage_bucket_name']);
-        $object = $bucket->object($objectName);
-        $object->downloadToFile(constant('FLOW_PATH_ROOT') . $objectName);
-        shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && tar -xvf ' . $objectName);
-        $this->databaseFactory->restoreDatabaseBackup();
-        $this->persistentDataFactory->restorePersistentDataBackup($objectName);
-        $this->deleteTmp($objectName);
-    }
-
-    /**
-     * @param string $objectName
-     */
-    function restorePersistentData($objectName) {
-        $storage = $this->storage();
-        $bucket = $storage->bucket($this->settings['storage_bucket_name']);
-        $object = $bucket->object($objectName);
-        $object->downloadToFile(constant('FLOW_PATH_ROOT') . $objectName);
-        shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && tar -xvf ' . $objectName);
-        $this->persistentDataFactory->restorePersistentDataBackup($objectName);
-        $this->deleteTmp($objectName);
-    }
-
-    /**
-     * @param string $objectName
-     */
-    function restoreDatabase($objectName) {
-        $storage = $this->storage();
-        $bucket = $storage->bucket($this->settings['storage_bucket_name']);
-        $object = $bucket->object($objectName);
-        $object->downloadToFile(constant('FLOW_PATH_ROOT') . $objectName);
-        shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && tar -xvf ' . $objectName);
-        $this->databaseFactory->restoreDatabaseBackup();
-        $this->deleteTmp($objectName);
-    }
-
-    /**
-     * @param string $objectName
-     */
-    function download($objectName) {
-        $storage = $this->storage();
-        $bucket = $storage->bucket($this->settings['storage_bucket_name']);
-        $object = $bucket->object($objectName);
-        $object->downloadToFile(constant('FLOW_PATH_ROOT') . $objectName);
-        shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && mv ' . $objectName . ' ' . constant('FLOW_PATH_ROOT') . 'Web/' . $objectName);
+    public function database():string
+    {
+        return $this->databaseFactory->create();
     }
 
     /**
      * @param string $objectName
      * @return string
      */
-    function delete($objectName) {
-        $storage = $this->storage();
-        $bucket = $storage->bucket($this->settings['storage_bucket_name']);
-        $object = $bucket->object($objectName);
-        $object->delete();
-        return $this->settings['storage_bucket_name'];
+    function restore(string $objectName):string
+    {
+        $this->persistentDataFactory->restore($objectName);
+        $this->databaseFactory->restore($objectName);
+        $this->unlinkTemporaryFiles($objectName);
+        return 'backup ' . $objectName . ' restored.';
+    }
+
+    /**
+     * @param string $objectName
+     * @return string
+     */
+    function restorePersistentData(string $objectName):string
+    {
+        $this->persistentDataFactory->restore($objectName);
+        $this->unlinkTemporaryFiles($objectName);
+        return 'persistent data backup ' . $objectName . ' restored.';
+    }
+
+    /**
+     * @param string $objectName
+     * @return string
+     */
+    function restoreDatabase(string $objectName):string
+    {
+        $this->databaseFactory->restore($objectName);
+        $this->unlinkTemporaryFiles($objectName);
+        return 'database backup ' . $objectName . ' restored.';
+    }
+
+    /**
+     * @param string $objectName
+     * @return string
+     */
+    function delete(string $objectName):string
+    {
+        $this->googleCloudStorageService->delete($objectName);
+        return 'backup ' . $objectName . ' deleted.';
     }
 
     /**
      * @param string $objectName
      * @return void
      */
-    function deleteTmp($objectName) {
-        shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && rm -rf ' . $objectName);
-        shell_exec('cd ' . constant('FLOW_PATH_ROOT') . ' && rm -rf data');
+    function unlinkTemporaryFiles(string $objectName):void
+    {
+        unlink(sys_get_temp_dir() . '/' . 'PersistentData.zip');
+        unlink(sys_get_temp_dir() . '/' . $objectName);
+        unlink(sys_get_temp_dir() . '/Database.sql');
     }
-
-
 
 }

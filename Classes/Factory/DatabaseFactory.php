@@ -7,6 +7,8 @@ namespace NeosRulez\Backup\GoogleCloudStorage\Factory;
 
 use Neos\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
+use Neos\Flow\Configuration\ConfigurationManager;
+use wapmorgan\UnifiedArchive\UnifiedArchive;
 use Ifsnop\Mysqldump as IMysqldump;
 
 /**
@@ -16,50 +18,112 @@ use Ifsnop\Mysqldump as IMysqldump;
 class DatabaseFactory {
 
     /**
+     * @Flow\Inject
+     * @var ConfigurationManager
+     */
+    protected $configurationManager;
+
+    /**
+     * @Flow\Inject
+     * @var \NeosRulez\Backup\GoogleCloudStorage\Service\GoogleCloudStorageService
+     */
+    protected $googleCloudStorageService;
+
+
+    /**
      * @return string
      */
-    public function createDatabaseBackup() {
-        $credentials = $this->getDatabaseCredentials();
-        try {
-            $dump = new IMysqldump\Mysqldump('mysql:host=' . $credentials['host'] . ';dbname=' . $credentials['dbname'] . '', $credentials['user'], $credentials['password']);
-            $dump_file = constant('FLOW_PATH_ROOT') . $credentials['dbname'] . '_' . date('Y-m-d_H-i-s') . '.sql';
-            $dump->start($dump_file);
-        } catch (\Exception $e) {
-            print('mysqldump-php error: ' . $e->getMessage());
-            $dump_file = false;
+    public function create():string
+    {
+        $backendOptions = $this->getConfiguration();
+        $dumpFile = '';
+        if(!empty($backendOptions)) {
+            try {
+                $dump = new IMysqldump\Mysqldump('mysql:host=' . $backendOptions['host'] . ';dbname=' . $backendOptions['dbname'] . '', $backendOptions['user'], $backendOptions['password']);
+                $dumpFile = sys_get_temp_dir() . '/' . $backendOptions['dbname'] . '_' . date('Y-m-d_H-i-s') . '.sql';
+                $dump->start($dumpFile);
+            } catch (\Exception $e) {
+                print('mysqldump-php error: ' . $e->getMessage());
+            }
         }
-        return $dump_file;
+        return $dumpFile;
     }
 
     /**
-     * @return void
+     * @param string $objectName
+     * @return string
      */
-    public function restoreDatabaseBackup() {
-        $sqlfile = [];
-        $dir = constant('FLOW_PATH_ROOT') . 'data/neos';
-        if (is_dir($dir)){
-            if ($dh = opendir($dir)){
-                while (($file = readdir($dh)) !== false){
-                    $sqlfile[] = $file;
+    public function restore(string $objectName):string
+    {
+        $backup = $this->googleCloudStorageService->restore($objectName);
+        $archive = UnifiedArchive::open(sys_get_temp_dir() . '/' . $objectName);
+        $backendOptions = $this->getConfiguration();
+        $result = '';
+        if ($backup !== null && !empty($backendOptions)) {
+            $outputDir = sys_get_temp_dir();
+            if (disk_free_space($outputDir) > $archive->getOriginalSize()) {
+                $archive->extractFiles($outputDir);
+                foreach ($archive->getFileNames() as $file) {
+                    if($file == 'Database.sql') {
+                        $pdo = new \PDO('mysql:host=' . $backendOptions['host'], $backendOptions['user'], $backendOptions['password']);
+                        $this->dropDatabase($pdo, $backendOptions['dbname']);
+                        $this->createDatabase($pdo, $backendOptions['dbname']);
+                        $pdo = new \PDO('mysql:host=' . $backendOptions['host'] . ';dbname=' . $backendOptions['dbname'], $backendOptions['user'], $backendOptions['password']);
+                        $this->importSqlFile($pdo, sys_get_temp_dir() . '/' . $file);
+
+                        break;
+                    }
                 }
-                closedir($dh);
+            } else {
+                $result = 'Not enough disk space! Disk: ' . disk_free_space($outputDir) . ', Backup: ' . $archive->getOriginalSize();
             }
         }
-        $credentials = $this->getDatabaseCredentials();
-        $pdo = new \PDO('mysql:host=' . $credentials['host'] . ';dbname=' . $credentials['dbname'] .'', $credentials['user'],  $credentials['password']);
-        $this->importSqlFile($pdo, constant('FLOW_PATH_ROOT') . 'data/neos/' . $sqlfile[1]);
+        return $result;
     }
 
     /**
      *
      * @return array
      */
-    public function getDatabaseCredentials() {
-        $flow_rootpath = constant('FLOW_PATH_ROOT');
-        $configuration = shell_exec('cd ' . $flow_rootpath . ' && ./flow configuration:show');
-        $configuration_yaml = yaml_parse($configuration);
-        $yaml_parse = $configuration_yaml['Neos']['Flow']['persistence']['backendOptions'];
-        return $yaml_parse;
+    public function getConfiguration():array
+    {
+        $availableConfigurationTypes = $this->configurationManager->getAvailableConfigurationTypes();
+        $backendOptions = [];
+        if (in_array('Settings', $availableConfigurationTypes)) {
+            $configuration = $this->configurationManager->getConfiguration('Settings');
+            if (array_key_exists('Neos', $configuration)) {
+                if (array_key_exists('Flow', $configuration['Neos'])) {
+                    if (array_key_exists('persistence', $configuration['Neos']['Flow'])) {
+                        if (array_key_exists('backendOptions', $configuration['Neos']['Flow']['persistence'])) {
+                            $backendOptions = $configuration['Neos']['Flow']['persistence']['backendOptions'];
+                        }
+                    }
+                }
+            }
+        }
+        return $backendOptions;
+    }
+
+    /**
+     * @param $pdo
+     * @param string $database
+     * @return void
+     */
+    public function dropDatabase($pdo, string $database):void
+    {
+        $drop = 'DROP DATABASE ' . $database;
+        $pdo->query($drop);
+    }
+
+    /**
+     * @param $pdo
+     * @param string $database
+     * @return void
+     */
+    public function createDatabase($pdo, string $database):void
+    {
+        $create = 'CREATE DATABASE ' . $database;
+        $pdo->query($create);
     }
 
     /**
@@ -71,7 +135,7 @@ class DatabaseFactory {
      * @param null $InFilePath
      * @return bool
      */
-    function importSqlFile($pdo, $sqlFile, $tablePrefix = null, $InFilePath = null) {
+    function importSqlFile($pdo, $sqlFile, $tablePrefix = null, $InFilePath = null):bool {
         try {
             $pdo->setAttribute(\PDO::MYSQL_ATTR_LOCAL_INFILE, true);
             $errorDetect = false;

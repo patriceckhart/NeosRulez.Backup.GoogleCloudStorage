@@ -21,73 +21,76 @@ class BackupCommandController extends CommandController
     protected $backupService;
 
     /**
+     * @var array
+     */
+    protected $settings;
+
+    /**
+     * @param array $settings
+     * @return void
+     */
+    public function injectSettings(array $settings) {
+        $this->settings = $settings;
+    }
+
+
+    /**
      * Create backup on Google Cloud Storage
      *
      * @param string $name
      * @return void
      */
-    public function createCommand($name = NULL) {
-        if($name) {
-            $backup = $this->backupService->createBackup($name);
-        } else {
-            $backup = $this->backupService->createBackup();
-        }
-        $this->outputLine('created: ' . $backup['file'] . ' on ' . $backup['bucket']);
-    }
-
-    /**
-     * Restore backup from Google Cloud Storage (can't be undone!)
-     *
-     * @param string $backup
-     * @return void
-     */
-    public function restoreCommand($backup) {
-        $this->backupService->restore($backup);
-        $this->outputLine('restored: ' . $backup);
-    }
-
-    /**
-     * Restore only data backup from Google Cloud Storage (can't be undone!)
-     *
-     * @param string $backup
-     * @return void
-     */
-    public function restoredataCommand($backup) {
-        $this->backupService->restorePersistentData($backup);
-        $this->outputLine('data restored: ' . $backup);
-    }
-
-    /**
-     * Restore only database from Google Cloud Storage (can't be undone!)
-     *
-     * @param string $backup
-     * @return void
-     */
-    public function restoredatabaseCommand($backup) {
-        $this->backupService->restoreDatabase($backup);
-        $this->outputLine('database restored: ' . $backup);
-    }
-
-    /**
-     * Download backup from Google Cloud Storage
-     *
-     * @param string $backup
-     * @return void
-     */
-    public function downloadCommand($backup) {
-        $this->backupService->download($backup);
-        $this->outputLine('Backup has been downloaded: https://yourdomain.com/' . $backup);
+    public function createCommand(string $name = null):void
+    {
+        $backup = $name !== null ? $this->backupService->createBackup($name) : $this->backupService->createBackup();
+        $this->outputLine('backup ' . $backup . ' created on ' . $this->settings['storage_bucket_name']);
     }
 
     /**
      * Delete backup on Google Cloud Storage (can't be undone!)
      *
-     * @param string $backup
+     * @param string $name
      * @return void
      */
-    public function deleteCommand($backup) {
-        $bucket = $this->backupService->delete($backup);
-        $this->outputLine('deleted: ' . $backup . ' from ' . $bucket);
+    public function deleteCommand(string $name):void
+    {
+        $result = $this->backupService->delete($name);
+        $this->outputLine('deleted: ' . $result . ' from ' . $this->settings['storage_bucket_name']);
+    }
+
+    /**
+     * Restore backup from Google Cloud Storage (can't be undone!)
+     *
+     * @param string $name
+     * @return void
+     */
+    public function restoreCommand(string $name) {
+        $result = $this->backupService->restore($name);
+        $this->outputLine($result);
+    }
+
+    /**
+     * Restore persistent data backup from Google Cloud Storage (can't be undone!)
+     *
+     * @param string $name
+     * @return void
+     */
+    public function restoreDataCommand(string $name):void
+    {
+        $result = $this->backupService->restorePersistentData($name);
+        $this->outputLine($result);
+    }
+
+    /**
+     * Restore persistent data backup from Google Cloud Storage (can't be undone!)
+     *
+     * @param string $name
+     * @return void
+     */
+    public function restoreDatabaseCommand(string $name):void
+    {
+        $result = $this->backupService->restoreDatabase($name);
+        $this->outputLine($result);
     }
 
 }

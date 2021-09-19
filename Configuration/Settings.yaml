@@ -1,6 +1,6 @@
-NeosRulez:
-  Backup:
-    GoogleCloudStorage:
-      backup_identfier: 'backup' # your own backup identifier (extend filename on storage)
-      storage_bucket_name: 'my_neos_backups'
-      key_file_path: '/var/www/html/Packages/Sites/Acme.Site/Resources/Private/.credentials/credential.json'
+#NeosRulez:
+#  Backup:
+#    GoogleCloudStorage:
+#      backup_identfier: 'site-backup' # your own backup identifier (extend filename on storage)
+#      storage_bucket_name: 'site_backup_storage'
+#      key_file_path: '/data/neos/Data/gcs-ase173b1e093.json'

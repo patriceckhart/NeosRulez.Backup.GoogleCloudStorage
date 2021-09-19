@@ -4,6 +4,7 @@
     "name": "neosrulez/backup-googlecloudstorage",
     "require": {
         "neos/flow": "*",
+        "wapmorgan/unified-archive": "^1.1",
         "ifsnop/mysqldump-php": "2.9",
         "google/cloud-storage": "*"
     },
