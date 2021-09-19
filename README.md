@@ -1,15 +1,15 @@
 # Neos CMS and Neos Flow Google Cloud Storage Backup
 
-A package for Neos CMS and Neos Flow to create and restore backups in and from Google Cloud Storage.
+A package for Neos CMS and Neos Flow to create and restore backups on and from Google Cloud Storage.
 
 ## Installation
 
 The NeosRulez.Backup.GoogleCloudStorage package is listed on packagist (https://packagist.org/packages/neosrulez/backup-googlecloudstorage) - therefore you don't have to include the package in your "repositories" entry any more.
 
-Just add the following line to your require section:
+Just run:
 
 ```
-"neosrulez/backup-googlecloudstorage": "*"
+composer require neosrulez/backup-googlecloudstorage
 ```
 
 ## Settings.yaml
@@ -29,13 +29,12 @@ NeosRulez:
 
 | CLI command | Action |
 |---------|-------------|
-|./flow backup:create|Create backup in Google Cloud Storage|
+|./flow backup:create|Create backup on Google Cloud Storage|
 |./flow backup:create --name `custom`|Create custom named backup in Google Cloud Storage|
 |./flow backup:restore `name_of_the_backup.tar.gz`|Restore backup from Google Cloud Storage (can't be undone!)|
-|./flow backup:restoredata|Restore only data backup from Google Cloud Storage (can't be undone!)|
-|./flow backup:restoredatabase|Restore only database from Google Cloud Storage (can't be undone!)|
-|./flow backup:download|Download backup from Google Cloud Storage|
-|./flow backup:delete|Delete backup in Google Cloud Storage (can't be undone!)|
+|./flow backup:restoredata|Restore persistent data backup from Google Cloud Storage (can't be undone!)|
+|./flow backup:restoredatabase|Restore persistent data backup from Google Cloud Storage (can't be undone!)
+|./flow backup:delete|Delete backup on Google Cloud Storage (can't be undone!)|
 
 ## Author
 
