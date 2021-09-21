@@ -56,7 +56,7 @@ class BackupService {
     {
         $tempDir = sys_get_temp_dir();
         $fileIdentifier = $name !== null ? $name : $this->settings['backup_identfier'];
-        $backupFilename = $fileIdentifier . '_' . date('Y-m-d_H-i-s').'.tar.gz';
+        $backupFilename = $fileIdentifier . '_' . date('Y-m-d_H-i-s').'.zip';
         $backupSource = $tempDir . '/' . $backupFilename;
 
         $persistentData = $this->persistentDataFactory->create();
