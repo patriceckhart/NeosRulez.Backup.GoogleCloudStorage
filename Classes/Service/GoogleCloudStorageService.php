@@ -80,4 +80,23 @@ class GoogleCloudStorageService {
         return true;
     }
 
+    /**
+     * @param string $prefix
+     * @return string
+     */
+    public function generateLatestObjectUrl(string $prefix): string
+    {
+        $storage = $this->storage();
+        $bucket = $storage->bucket($this->settings['storage_bucket_name']);
+        $lastObject = null;
+        /* @var StorageObject $object */
+        foreach ($bucket->objects(['prefix' => $prefix]) as $object) {
+            $lastObject = $object;
+        }
+        if ($lastObject !== null) {
+            return $lastObject->signedUrl(new \DateTime('+ 600 seconds'));
+        }
+        return '';
+    }
+
 }

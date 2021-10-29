@@ -133,4 +133,12 @@ class BackupService {
         unlink(sys_get_temp_dir() . '/Database.sql');
     }
 
+    /**
+     * @return string
+     */
+    public function generateLatestBackupUrl(): string
+    {
+        return $this->googleCloudStorageService->generateLatestObjectUrl($this->settings['backup_identfier']);
+    }
+
 }
