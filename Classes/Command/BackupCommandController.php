@@ -8,6 +8,8 @@ namespace NeosRulez\Backup\GoogleCloudStorage\Command;
 use Neos\Flow\Annotations as Flow;
 use Neos\Flow\Cli\CommandController;
 
+use NeosRulez\Backup\GoogleCloudStorage\Service\BackupService;
+
 /**
  * @Flow\Scope("singleton")
  */
@@ -16,7 +18,7 @@ class BackupCommandController extends CommandController
 
     /**
      * @Flow\Inject
-     * @var \NeosRulez\Backup\GoogleCloudStorage\Service\BackupService
+     * @var BackupService
      */
     protected $backupService;
 
@@ -29,10 +31,10 @@ class BackupCommandController extends CommandController
      * @param array $settings
      * @return void
      */
-    public function injectSettings(array $settings) {
+    public function injectSettings(array $settings): void
+    {
         $this->settings = $settings;
     }
-
 
     /**
      * Create backup on Google Cloud Storage
@@ -40,9 +42,9 @@ class BackupCommandController extends CommandController
      * @param string $name
      * @return void
      */
-    public function createCommand(string $name = null):void
+    public function createCommand(string $name = ''): void
     {
-        $backup = $name !== null ? $this->backupService->createBackup($name) : $this->backupService->createBackup();
+        $backup = $name !== '' ? $this->backupService->createBackup($name) : $this->backupService->createBackup();
         $this->outputLine('backup ' . $backup . ' created on ' . $this->settings['storage_bucket_name']);
     }
 
@@ -52,7 +54,7 @@ class BackupCommandController extends CommandController
      * @param string $name
      * @return void
      */
-    public function deleteCommand(string $name):void
+    public function deleteCommand(string $name): void
     {
         $result = $this->backupService->delete($name);
         $this->outputLine('deleted: ' . $result . ' from ' . $this->settings['storage_bucket_name']);
@@ -64,7 +66,8 @@ class BackupCommandController extends CommandController
      * @param string $name
      * @return void
      */
-    public function restoreCommand(string $name) {
+    public function restoreCommand(string $name): void
+    {
         $result = $this->backupService->restore($name);
         $this->outputLine($result);
     }
@@ -75,7 +78,7 @@ class BackupCommandController extends CommandController
      * @param string $name
      * @return void
      */
-    public function restoreDataCommand(string $name):void
+    public function restoreDataCommand(string $name): void
     {
         $result = $this->backupService->restorePersistentData($name);
         $this->outputLine($result);
@@ -87,7 +90,7 @@ class BackupCommandController extends CommandController
      * @param string $name
      * @return void
      */
-    public function restoreDatabaseCommand(string $name):void
+    public function restoreDatabaseCommand(string $name): void
     {
         $result = $this->backupService->restoreDatabase($name);
         $this->outputLine($result);
