@@ -7,35 +7,24 @@ namespace NeosRulez\Backup\GoogleCloudStorage\Service;
 
 use Neos\Flow\Annotations as Flow;
 use Doctrine\ORM\Mapping as ORM;
+
 use Google\Cloud\Storage\StorageClient;
 
 /**
  *
  * @Flow\Scope("singleton")
  */
-class GoogleCloudStorageService {
-
-    /**
-     * @var array
-     */
-    protected $settings;
-
-    /**
-     * @param array $settings
-     * @return void
-     */
-    public function injectSettings(array $settings) {
-        $this->settings = $settings;
-    }
+class GoogleCloudStorageService extends AbstractService
+{
 
     /**
      * @return StorageClient
      */
-    public function storage() {
-        $storage = new StorageClient([
+    private function storage(): StorageClient
+    {
+        return new StorageClient([
             'keyFilePath' => $this->settings['key_file_path']
         ]);
-        return $storage;
     }
 
     /**
@@ -43,7 +32,7 @@ class GoogleCloudStorageService {
      * @param string $source
      * @return bool
      */
-    function upload(string $objectName, string $source):bool
+    public function upload(string $objectName, string $source): bool
     {
         $storage = $this->storage();
         $file = fopen($source, 'r');
@@ -58,7 +47,7 @@ class GoogleCloudStorageService {
      * @param string $objectName
      * @return bool
      */
-    function delete(string $objectName):bool
+    public function delete(string $objectName): bool
     {
         $storage = $this->storage();
         $bucket = $storage->bucket($this->settings['storage_bucket_name']);
@@ -69,14 +58,14 @@ class GoogleCloudStorageService {
 
     /**
      * @param string $objectName
-     * @return string
+     * @return bool
      */
-    function restore(string $objectName):bool
+    public function restore(string $objectName): bool
     {
         $storage = $this->storage();
         $bucket = $storage->bucket($this->settings['storage_bucket_name']);
         $object = $bucket->object($objectName);
-        $object->downloadToFile(sys_get_temp_dir() . '/' . $objectName);
+        $object->downloadToFile($this->getTemporaryPath() . $objectName);
         return true;
     }
 
