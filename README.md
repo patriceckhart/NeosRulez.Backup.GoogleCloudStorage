@@ -4,10 +4,6 @@ A package for Neos CMS and Neos Flow to create and restore backups on and from G
 
 ## Installation
 
-The NeosRulez.Backup.GoogleCloudStorage package is listed on packagist (https://packagist.org/packages/neosrulez/backup-googlecloudstorage) - therefore you don't have to include the package in your "repositories" entry any more.
-
-Just run:
-
 ```
 composer require neosrulez/backup-googlecloudstorage
 ```
@@ -27,14 +23,14 @@ NeosRulez:
 
 ## CLI
 
-| CLI command | Action |
-|---------|-------------|
-|./flow backup:create|Create backup on Google Cloud Storage|
-|./flow backup:create --name `name_of_the_backup`|Create custom named backup in Google Cloud Storage|
-|./flow backup:restore `name_of_the_backup.tar.gz`|Restore backup from Google Cloud Storage (can't be undone!)|
-|./flow backup:restoredata `name_of_the_backup.tar.gz`|Restore persistent data backup from Google Cloud Storage (can't be undone!)|
-|./flow backup:restoredatabase `name_of_the_backup.tar.gz`|Restore persistent data backup from Google Cloud Storage (can't be undone!)
-|./flow backup:delete|Delete backup on Google Cloud Storage (can't be undone!)|
+| CLI command                                            | Action                                                                      |
+|--------------------------------------------------------|-----------------------------------------------------------------------------|
+| ./flow backup:create                                   | Create backup on Google Cloud Storage                                       |
+| ./flow backup:create --name `name_of_the_backup`       | Create custom named backup in Google Cloud Storage (without file extension) |
+| ./flow backup:restore `name_of_the_backup.zip`         | Restore backup from Google Cloud Storage (can't be undone!)                 |
+| ./flow backup:restoredata `name_of_the_backup.zip`     | Restore persistent data backup from Google Cloud Storage (can't be undone!) |
+| ./flow backup:restoredatabase `name_of_the_backup.zip` | Restore persistent data backup from Google Cloud Storage (can't be undone!) |
+| ./flow backup:delete                                   | Delete backup on Google Cloud Storage (can't be undone!)                    |
 
 ## Author
 
